@@ -6,10 +6,11 @@ package go_bk_tree
 import (
 	"testing"
 	l "github.com/texttheater/golang-levenshtein/levenshtein"
-	"github.com/icrowley/fake"
 	"fmt"
 	"math/rand"
+	"github.com/icrowley/fake"
 )
+
 
 type Word struct {
 	word string
@@ -73,18 +74,57 @@ func makeRandomTree(size int) ([]string, *BKTree) {
 	fakeStuff := make([]string, size, size)
 	for i := 0; i < size; i++ {
 		fakeStuff = append(fakeStuff, fake.DomainName())
+		//fakeStuff = append(fakeStuff, strconv.FormatInt(rand.Int63(), 10))
 	}
 	return fakeStuff, createNewTree(fakeStuff)
 }
 
-func BenchmarkBKTree_Search_10000(b *testing.B) {
-	size := 10000
-	fakeStuff, tree := makeRandomTree(size)
-	b.ResetTimer()
-
+func BenchmarkBKTree_Search_ExactMatch(b *testing.B) {
+	fakeSize := 100000
+	fakeStuff, benchmarkTree := makeRandomTree(fakeSize)
 	for i := 0; i < b.N; i++ {
-		randWord := fakeStuff[rand.Intn(size)]
+		randWord := fakeStuff[rand.Intn(fakeSize)]
 		query := NewWord(randWord)
-		tree.Search(query, 0)
+		benchmarkTree.Search(query, 0)
+	}
+}
+
+func BenchmarkBKTree_Search_Radius1Match(b *testing.B) {
+	fakeSize := 100000
+	fakeStuff, benchmarkTree := makeRandomTree(fakeSize)
+	for i := 0; i < b.N; i++ {
+		randWord := fakeStuff[rand.Intn(fakeSize)]
+		query := NewWord(randWord)
+		benchmarkTree.Search(query, 1)
+	}
+}
+
+func BenchmarkBKTree_Search_Radius2Match(b *testing.B) {
+	fakeSize := 100000
+	fakeStuff, benchmarkTree := makeRandomTree(fakeSize)
+	for i := 0; i < b.N; i++ {
+		randWord := fakeStuff[rand.Intn(fakeSize)]
+		query := NewWord(randWord)
+		benchmarkTree.Search(query, 2)
+	}
+}
+
+func BenchmarkBKTree_Search_Radius4Match(b *testing.B) {
+	fakeSize := 100000
+	fakeStuff, benchmarkTree := makeRandomTree(fakeSize)
+	for i := 0; i < b.N; i++ {
+		randWord := fakeStuff[rand.Intn(fakeSize)]
+		query := NewWord(randWord)
+		benchmarkTree.Search(query, 4)
+	}
+}
+
+func BenchmarkBKTree_Search_Radius32Match(b *testing.B) {
+	fakeSize := 100000
+	fakeStuff, benchmarkTree := makeRandomTree(fakeSize)
+	for i := 0; i < b.N; i++ {
+		randWord := fakeStuff[rand.Intn(fakeSize)]
+		query := NewWord(randWord)
+		benchmarkTree.Search(query, 32)
 	}
 }
