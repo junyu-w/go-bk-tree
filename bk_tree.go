@@ -3,6 +3,11 @@
 // searching a set of keys to find a key which is closest to a given query key. (Doc reference: http://signal-to-noise.xyz/post/bk-tree/)
 package go_bk_tree
 
+import (
+	"time"
+	"fmt"
+)
+
 type Distance int
 
 // MetricTensor is an interface of data that needs to be indexed
@@ -58,23 +63,28 @@ func (tree *BKTree) Add(val MetricTensor) {
 }
 
 func (tree *BKTree) Search(val MetricTensor, radius Distance) []MetricTensor {
-	candidates := make([]*bkTreeNode, 0, 10)
-	candidates = append(candidates, tree.root)
 	results := make([]MetricTensor, 0, 5)
+
+	candsChan := make(chan *bkTreeNode)
+	candsChan <- tree.root
 	for {
-		cand := candidates[0]
-		candidates = candidates[1:]
-		dist := cand.DistanceFrom(val)
-		if dist <= radius {
-			results = append(results, cand.MetricTensor)
-		}
-		low, high := dist - radius, dist + radius
-		for dist, child := range cand.Children {
-			if dist >= low && dist <= high {
-				candidates = append(candidates, child)
-			}
-		}
-		if len(candidates) == 0 {
+		fmt.Println("hello")
+		select {
+		case cand := <-candsChan:
+			go func() {
+				fmt.Println("hello")
+				dist := cand.DistanceFrom(val)
+				if dist <= radius {
+					results = append(results, cand.MetricTensor)
+				}
+				low, high := dist - radius, dist + radius
+				for dist, child := range cand.Children {
+					if dist >= low && dist <= high {
+						candsChan <- child
+					}
+				}
+			}()
+		case <-time.After(time.Millisecond * 5):
 			break
 		}
 	}
