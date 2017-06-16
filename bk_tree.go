@@ -6,6 +6,17 @@ package go_bk_tree
 type Distance int
 
 // MetricTensor is an interface of data that needs to be indexed
+//
+// Example:
+//  import l "github.com/texttheater/golang-levenshtein/levenshtein"
+//
+//  type Word struct {
+//	  word string
+//  }
+//
+//  func (w Word) DistanceFrom(w2 MetricTensor) Distance {
+//	  return Distance(l.DistanceForStrings([]rune(w.word), []rune(w2.(Word).word), l.DefaultOptions))
+//  }
 type MetricTensor interface {
 	DistanceFrom(other MetricTensor) Distance
 }
