@@ -5,7 +5,6 @@ package go_bk_tree
 
 import (
 	"time"
-	"fmt"
 )
 
 type Distance int
@@ -64,30 +63,28 @@ func (tree *BKTree) Add(val MetricTensor) {
 
 func (tree *BKTree) Search(val MetricTensor, radius Distance) []MetricTensor {
 	results := make([]MetricTensor, 0, 5)
-
-	candsChan := make(chan *bkTreeNode)
+	candsChan := make(chan *bkTreeNode, 100)
 	candsChan <- tree.root
-	for {
-		fmt.Println("hello")
-		select {
-		case cand := <-candsChan:
-			go func() {
-				fmt.Println("hello")
-				dist := cand.DistanceFrom(val)
-				if dist <= radius {
-					results = append(results, cand.MetricTensor)
-				}
-				low, high := dist - radius, dist + radius
-				for dist, child := range cand.Children {
-					if dist >= low && dist <= high {
-						candsChan <- child
+	LOOP:
+		for {
+			select {
+			case cand := <-candsChan:
+				go func() {
+					dist := cand.DistanceFrom(val)
+					if dist <= radius {
+						results = append(results, cand.MetricTensor)
 					}
-				}
-			}()
-		case <-time.After(time.Millisecond * 5):
-			break
+					low, high := dist - radius, dist + radius
+					for dist, child := range cand.Children {
+						if dist >= low && dist <= high {
+							candsChan <- child
+						}
+					}
+				}()
+			case <-time.After(time.Millisecond * 1):
+				break LOOP
+			}
 		}
-	}
 	return results
 }
 

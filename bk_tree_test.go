@@ -6,7 +6,9 @@ package go_bk_tree
 import (
 	"testing"
 	l "github.com/texttheater/golang-levenshtein/levenshtein"
+	"github.com/icrowley/fake"
 	"fmt"
+	"math/rand"
 )
 
 type Word struct {
@@ -51,7 +53,7 @@ func TestBKTree_Add(t *testing.T) {
 // Word is a custom struct the implements the MetricTensor interface,
 // and it uses the Levenshtein distance as distance function
 func ExampleBKTree_Search() {
-	wordsList := []string{"some", "soft", "sorted", "same", "mole", "soda", "salmon", "sort"}
+	wordsList := []string{"some", "soft", "sorted", "same", "mole", "soda", "salmon"}
 	tree := createNewTree(wordsList)
 
 	// fuzzy match
@@ -59,9 +61,30 @@ func ExampleBKTree_Search() {
 	results := tree.Search(query, 2)
 	fmt.Println(results)
 	// exact match
-	results2 := tree.Search(query, 0)
+	query2 := NewWord("mole")
+	results2 := tree.Search(query2, 0)
 	fmt.Println(results2)
 	// Output:
-	// [{soft} {sorted} {sort}]
-	// [{sort}]
+	// [{soft} {sorted}]
+	// [{mole}]
+}
+
+func makeRandomTree(size int) ([]string, *BKTree) {
+	fakeStuff := make([]string, size, size)
+	for i := 0; i < size; i++ {
+		fakeStuff = append(fakeStuff, fake.DomainName())
+	}
+	return fakeStuff, createNewTree(fakeStuff)
+}
+
+func BenchmarkBKTree_Search_10000(b *testing.B) {
+	size := 10000
+	fakeStuff, tree := makeRandomTree(size)
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		randWord := fakeStuff[rand.Intn(size)]
+		query := NewWord(randWord)
+		tree.Search(query, 0)
+	}
 }
