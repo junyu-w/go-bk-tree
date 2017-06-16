@@ -80,7 +80,7 @@ func makeRandomTree(size int) ([]string, *BKTree) {
 }
 
 func BenchmarkBKTree_Search_ExactMatch(b *testing.B) {
-	fakeSize := 100000
+	fakeSize := 1000000
 	fakeStuff, benchmarkTree := makeRandomTree(fakeSize)
 	for i := 0; i < b.N; i++ {
 		randWord := fakeStuff[rand.Intn(fakeSize)]
@@ -89,8 +89,9 @@ func BenchmarkBKTree_Search_ExactMatch(b *testing.B) {
 	}
 }
 
+
 func BenchmarkBKTree_Search_Radius1Match(b *testing.B) {
-	fakeSize := 100000
+	fakeSize := 1000000
 	fakeStuff, benchmarkTree := makeRandomTree(fakeSize)
 	for i := 0; i < b.N; i++ {
 		randWord := fakeStuff[rand.Intn(fakeSize)]
@@ -100,7 +101,7 @@ func BenchmarkBKTree_Search_Radius1Match(b *testing.B) {
 }
 
 func BenchmarkBKTree_Search_Radius2Match(b *testing.B) {
-	fakeSize := 100000
+	fakeSize := 1000000
 	fakeStuff, benchmarkTree := makeRandomTree(fakeSize)
 	for i := 0; i < b.N; i++ {
 		randWord := fakeStuff[rand.Intn(fakeSize)]
@@ -110,7 +111,7 @@ func BenchmarkBKTree_Search_Radius2Match(b *testing.B) {
 }
 
 func BenchmarkBKTree_Search_Radius4Match(b *testing.B) {
-	fakeSize := 100000
+	fakeSize := 1000000
 	fakeStuff, benchmarkTree := makeRandomTree(fakeSize)
 	for i := 0; i < b.N; i++ {
 		randWord := fakeStuff[rand.Intn(fakeSize)]
@@ -120,7 +121,7 @@ func BenchmarkBKTree_Search_Radius4Match(b *testing.B) {
 }
 
 func BenchmarkBKTree_Search_Radius32Match(b *testing.B) {
-	fakeSize := 100000
+	fakeSize := 1000000
 	fakeStuff, benchmarkTree := makeRandomTree(fakeSize)
 	for i := 0; i < b.N; i++ {
 		randWord := fakeStuff[rand.Intn(fakeSize)]

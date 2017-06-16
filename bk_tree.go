@@ -61,30 +61,57 @@ func (tree *BKTree) Add(val MetricTensor) {
 	}
 }
 
+
 func (tree *BKTree) Search(val MetricTensor, radius Distance) []MetricTensor {
+	candidates := make([]*bkTreeNode, 0, 10)
+	candidates = append(candidates, tree.root)
+	results := make([]MetricTensor, 0, 5)
+	for {
+		cand := candidates[0]
+		candidates = candidates[1:]
+		dist := cand.DistanceFrom(val)
+		if dist <= radius {
+			results = append(results, cand.MetricTensor)
+		}
+		low, high := dist - radius, dist + radius
+		for dist, child := range cand.Children {
+			if dist >= low && dist <= high {
+				candidates = append(candidates, child)
+			}
+		}
+		if len(candidates) == 0 {
+			break
+		}
+	}
+	return results
+}
+
+// Notice: this is an async implementation using goroutines for fun in order to see if async will out-perform the traditional
+// implementation. Turns out it DID NOT.
+func (tree *BKTree) SearchAsync(val MetricTensor, radius Distance) []MetricTensor {
 	results := make([]MetricTensor, 0, 5)
 	candsChan := make(chan *bkTreeNode, 100)
 	candsChan <- tree.root
 	LOOP:
-		for {
-			select {
-			case cand := <-candsChan:
-				go func() {
-					dist := cand.DistanceFrom(val)
-					if dist <= radius {
-						results = append(results, cand.MetricTensor)
+	for {
+		select {
+		case cand := <-candsChan:
+			go func() {
+				dist := cand.DistanceFrom(val)
+				if dist <= radius {
+					results = append(results, cand.MetricTensor)
+				}
+				low, high := dist - radius, dist + radius
+				for dist, child := range cand.Children {
+					if dist >= low && dist <= high {
+						candsChan <- child
 					}
-					low, high := dist - radius, dist + radius
-					for dist, child := range cand.Children {
-						if dist >= low && dist <= high {
-							candsChan <- child
-						}
-					}
-				}()
-			case <-time.After(time.Millisecond * 1):
-				break LOOP
-			}
+				}
+			}()
+		case <-time.After(time.Millisecond * 1):
+			break LOOP
 		}
+	}
 	return results
 }
 
