@@ -4,6 +4,7 @@
 package go_bk_tree
 
 import (
+	"runtime"
 	"time"
 )
 
@@ -14,12 +15,10 @@ type Distance int
 // Example:
 //  import l "github.com/texttheater/golang-levenshtein/levenshtein"
 //
-//  type Word struct {
-//	  word string
-//  }
+//  type Word string
 //
 //  func (w Word) DistanceFrom(w2 MetricTensor) Distance {
-//	  return Distance(l.DistanceForStrings([]rune(w.word), []rune(w2.(Word).word), l.DefaultOptions))
+// 	 return Distance(l.DistanceForStrings([]rune(string(w)), []rune(string(w2.(Word))), l.DefaultOptions))
 //  }
 type MetricTensor interface {
 	DistanceFrom(other MetricTensor) Distance
@@ -33,7 +32,7 @@ type bkTreeNode struct {
 func newbkTreeNode(v MetricTensor) *bkTreeNode {
 	return &bkTreeNode{
 		MetricTensor: v,
-		Children: make(map[Distance]*bkTreeNode),
+		Children:     make(map[Distance]*bkTreeNode),
 	}
 }
 
@@ -61,7 +60,6 @@ func (tree *BKTree) Add(val MetricTensor) {
 	}
 }
 
-
 func (tree *BKTree) Search(val MetricTensor, radius Distance) []MetricTensor {
 	candidates := make([]*bkTreeNode, 0, 10)
 	candidates = append(candidates, tree.root)
@@ -73,7 +71,7 @@ func (tree *BKTree) Search(val MetricTensor, radius Distance) []MetricTensor {
 		if dist <= radius {
 			results = append(results, cand.MetricTensor)
 		}
-		low, high := dist - radius, dist + radius
+		low, high := dist-radius, dist+radius
 		for dist, child := range cand.Children {
 			if dist >= low && dist <= high {
 				candidates = append(candidates, child)
@@ -86,13 +84,15 @@ func (tree *BKTree) Search(val MetricTensor, radius Distance) []MetricTensor {
 	return results
 }
 
+var numCPU = runtime.NumCPU()
+
 // Notice: this is an async implementation using goroutines for fun in order to see if async will out-perform the traditional
 // implementation. Turns out it DID NOT.
 func (tree *BKTree) SearchAsync(val MetricTensor, radius Distance) []MetricTensor {
 	results := make([]MetricTensor, 0, 5)
 	candsChan := make(chan *bkTreeNode, 100)
 	candsChan <- tree.root
-	LOOP:
+LOOP:
 	for {
 		select {
 		case cand := <-candsChan:
@@ -101,7 +101,7 @@ func (tree *BKTree) SearchAsync(val MetricTensor, radius Distance) []MetricTenso
 				if dist <= radius {
 					results = append(results, cand.MetricTensor)
 				}
-				low, high := dist - radius, dist + radius
+				low, high := dist-radius, dist+radius
 				for dist, child := range cand.Children {
 					if dist >= low && dist <= high {
 						candsChan <- child
@@ -114,6 +114,3 @@ func (tree *BKTree) SearchAsync(val MetricTensor, radius Distance) []MetricTenso
 	}
 	return results
 }
-
-
-
