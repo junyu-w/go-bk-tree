@@ -1,3 +1,6 @@
+/*
+Package go-bk-tree works like a charm
+ */
 package go_bk_tree
 
 import (
@@ -10,8 +13,8 @@ type Word struct {
 	word string
 }
 
-func (w Word) distanceFrom(w2 MetricTensor) distance {
-	return distance(l.DistanceForStrings([]rune(w.word), []rune(w2.(Word).word), l.DefaultOptions))
+func (w Word) DistanceFrom(w2 MetricTensor) Distance {
+	return Distance(l.DistanceForStrings([]rune(w.word), []rune(w2.(Word).word), l.DefaultOptions))
 }
 
 func NewWord(w string) Word {
@@ -28,7 +31,7 @@ func createNewTree(words []string) *BKTree {
 	return tree
 }
 
-func TestBKTreeAdd(t *testing.T) {
+func TestBKTree_Add(t *testing.T) {
 	wordsList := []string{"a", "ab", "abc", "d"}
 	tree := createNewTree(wordsList)
 	if rootVal := tree.root.MetricTensor.(Word).word; rootVal != "a" {
@@ -44,12 +47,21 @@ func TestBKTreeAdd(t *testing.T) {
 	}
 }
 
-func ExampleBKTreeSearch() {
-	wordsList := []string{"some", "soft", "sorted", "same", "mole", "soda", "salmon"}
+
+// Word is a custom struct the implements the MetricTensor interface,
+// and it uses the Levenshtein distance as distance function
+func ExampleBKTree_Search() {
+	wordsList := []string{"some", "soft", "sorted", "same", "mole", "soda", "salmon", "sort"}
 	tree := createNewTree(wordsList)
 
+	// fuzzy match
 	query := NewWord("sort")
 	results := tree.Search(query, 2)
 	fmt.Println(results)
-	// Output: [{soft} {sorted}]
+	// exact match
+	results2 := tree.Search(query, 0)
+	fmt.Println(results2)
+	// Output:
+	// [{soft} {sorted} {sort}]
+	// [{sort}]
 }

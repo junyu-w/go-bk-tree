@@ -1,36 +1,42 @@
+// Package go_bk_tree is a tree data structure (implemented in Golang) specialized to index data in a metric space.
+// The BK-tree data structure was proposed by Burkhard and Keller in 1973 as a solution to the problem of
+// searching a set of keys to find a key which is closest to a given query key. (Doc reference: http://signal-to-noise.xyz/post/bk-tree/)
 package go_bk_tree
 
-type distance int
+type Distance int
 
+// MetricTensor is an interface of data that needs to be indexed
 type MetricTensor interface {
-	distanceFrom(other MetricTensor) distance
+	DistanceFrom(other MetricTensor) Distance
 }
 
-type BKTreeNode struct {
+type bkTreeNode struct {
 	MetricTensor
-	Children map[distance]*BKTreeNode
+	Children map[Distance]*bkTreeNode
 }
 
-func NewBKTreeNode(v MetricTensor) *BKTreeNode {
-	return &BKTreeNode{
+func newbkTreeNode(v MetricTensor) *bkTreeNode {
+	return &bkTreeNode{
 		MetricTensor: v,
-		Children: make(map[distance]*BKTreeNode),
+		Children: make(map[Distance]*bkTreeNode),
 	}
 }
 
 type BKTree struct {
-	root *BKTreeNode
+	root *bkTreeNode
 }
 
+// Add a node to BK-Tree, the location of the new node
+// depends on how distance between different tensors are defined
 func (tree *BKTree) Add(val MetricTensor) {
-	node := NewBKTreeNode(val)
+	node := newbkTreeNode(val)
 	if tree.root == nil {
 		tree.root = node
 		return
 	}
 	curNode := tree.root
 	for {
-		dist := curNode.distanceFrom(val)
+		dist := curNode.DistanceFrom(val)
 		target := curNode.Children[dist]
 		if target == nil {
 			curNode.Children[dist] = node
@@ -40,14 +46,14 @@ func (tree *BKTree) Add(val MetricTensor) {
 	}
 }
 
-func (tree *BKTree) Search(val MetricTensor, radius distance) []MetricTensor {
-	candidates := make([]*BKTreeNode, 0, 10)
+func (tree *BKTree) Search(val MetricTensor, radius Distance) []MetricTensor {
+	candidates := make([]*bkTreeNode, 0, 10)
 	candidates = append(candidates, tree.root)
 	results := make([]MetricTensor, 0, 5)
 	for {
 		cand := candidates[0]
 		candidates = candidates[1:]
-		dist := cand.distanceFrom(val)
+		dist := cand.DistanceFrom(val)
 		if dist <= radius {
 			results = append(results, cand.MetricTensor)
 		}
